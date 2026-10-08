@@ -9,7 +9,16 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+# Kotlin daemon / build sessions (regenerated every build)
+.kotlin/
+# Build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+*.hprof
