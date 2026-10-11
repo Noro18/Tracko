@@ -1,7 +1,7 @@
 # Spec: `data-core` (Module 1 of 8)
 
-**Status:** DRAFT — awaiting human approval.
-**Author:** opencode | **Date:** 2026-10-07 (revised same day)
+**Status:** ACCEPTED — approved by human 2026-10-11. All 8 tasks done, all success criteria met.
+**Author:** opencode | **Date:** 2026-10-07 (revised same day; tasks 6–8 completed 2026-10-11)
 **Parent:** `docs/architecture.md` v1.1 (approved) → capability map module `data-core`
 **Implements:** storage half of data model v1.1 (§2, §4.13); no behavior yet
 **Structure follows:** the `OrderManagementCake` conventions the author approved (data/local split, MainActivity DI) with the two deliberate deviations recorded in architecture assumption 8.
@@ -148,7 +148,7 @@ Note: `DayStatus` is imported from `domain/model` — direction `data → domain
 ## Testing Strategy
 
 - **Instrumented (`data/local/` package):**
-  1. Two logs with same `(habit_id, date)` → second rejected.
+  1. Two logs with same `(habit_id, date)` → second write wins, still one row (decided 2026-10-11: DAO is `@Upsert`, so re-taps / FR-19 never crash; the UNIQUE index stands guard at schema level).
   2. Delete habit → all its logs gone (cascade).
   3. Enum safety: unknown status/type strings throw in converter round-trip (`DayStatus.valueOf` rejects); repository range guards covered by JVM unit tests in task 6 (see revised constraint decision above).
   4. Converter round-trips: `2026-10-07` ↔ `LocalDate`, all 8 `DayStatus` values.
@@ -167,10 +167,10 @@ Note: `DayStatus` is imported from `domain/model` — direction `data → domain
 - [x] Dependencies resolve and `assembleDebug` passes with the versions recorded above (task 1, done 2026-10-07)
 - [x] 3 entities + `Converter` + `HabitWithLogs` exist; columns/contracts match the §2 checklist (entities + `Converter` done 2026-10-08; `HabitWithLogs` done 2026-10-09 — schema JSON verified column-for-column against §2)
 - [x] `domain/model/DayStatus.kt` + `Habit.kt` + `LogEntry.kt` exist, Android-free (task 2, done 2026-10-07; also `HabitType.kt`)
-- [ ] `app/schemas/.../TrackoDatabase/1.json` exists and is committed (generated and committed 2026-10-09)
-- [ ] All 5 instrumented test groups pass on device/emulator
+- [x] `app/schemas/.../TrackoDatabase/1.json` exists and is committed (generated and committed 2026-10-09)
+- [x] All 5 instrumented test groups pass on device (passed 2026-10-11 on physical device `PEPM00` via Android Studio)
 - [x] `./gradlew test` and `./gradlew lint` green (verified 2026-10-09 alongside `assembleDebug`)
-- [ ] `MainActivity` builds repos + passes them to factories (no `AppContainer`/`Application`)
+- [x] `MainActivity` builds repos + passes them to factories (wired 2026-10-11; factories plug in per-feature in `home`/`habit-edit`)
 
 ## Tasks (ordered, ≤5 files each)
 
@@ -179,9 +179,9 @@ Note: `DayStatus` is imported from `domain/model` — direction `data → domain
 3. **Entities + converter** — ✅ **DONE 2026-10-08**: `HabitEntity`, `HabitLogEntity`, `AppStateEntity`, `Converter` (sub-spec above). *Verify: build.*
 4. **Database + relations** — ✅ **DONE 2026-10-09**: `TrackoDatabase` (singleton, `exportSchema = true`, `@TypeConverters(Converter)`), `relations/HabitWithLogs.kt`, schema location via the `room.schemaLocation` KSP arg (already present from task 1). Build generated `app/schemas/com.example.tracko.data.local.TrackoDatabase/1.json` — verified against §2 (13 cols / 5 cols + FK CASCADE + UNIQUE index / 3 cols, PK `autoGenerate = false`); **pending commit**.
 5. **DAOs** — ✅ **DONE 2026-10-09**: `HabitDao`, `HabitLogDao`, `AppStateDao` — pulled forward into task 4 because `@Database` references all three and cannot compile without them. *Verify: build (green, same run).*
-6. **Repositories** — `HabitRepository`, `HabitLogRepository`, `AppStateRepository`. *Verify: build.*
-7. **DI wiring** — `MainActivity` singleton → repos → existing/new factories. *Verify: app launches.*
-8. **Tests** — `DbConstraintTest`, `ConverterTest`. *Verify: `connectedAndroidTest` + `test` + `lint` green.*
+6. **Repositories** — ✅ **DONE 2026-10-11**: `HabitRepository`, `HabitLogRepository`, `AppStateRepository` under `data/repository/` (only write path; `require(...)` guards for mask 1..127 / reminder 0..1439 / freeze 0..3 / threshold 50..100 / milestone {0,50,100,150}; `pause`/`resume` touch `paused_since` only with `PAUSED` backfill deferred to `streak-engine`; `editActiveDays` stubbed with §4.12 signature; `HabitLog` stays thin — full guards in `LoggingRules` slice 2). *Verify: `assembleDebug` + `test` + `lint` green (same run).*
+7. **DI wiring** — ✅ **DONE 2026-10-11**: `MainActivity` holds `database` + 3 repos as lazy vals (`getInstance(this)` → `XxxRepository(dao)`); per-feature factories plug in here in `home`/`habit-edit`. UI untouched. *Verify: `assembleDebug` + `test` + `lint` green.*
+8. **Tests** — ✅ **DONE 2026-10-11**: `DbConstraintTest` (upsert-replace + one-row, cascade, single-row), `ConverterTest` (round-trips + unknown-string throws). *Verified: `connectedDebugAndroidTest` green on physical device via Android Studio + `assembleDebugAndroidTest` + `test` + `lint` green.*
 
 ## Sub-spec: Task 2 — Domain models (accepted 2026-10-07)
 
