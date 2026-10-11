@@ -69,6 +69,11 @@ If a requirement is ambiguous, the SRD wins. If the SRD and the data model disag
 
 NFR-6 requires the streak/freeze/pause/inactive-day logic to be unit tested — it is the core of the app. Any change to that logic needs tests. Section 7 of the data model has 12 ready-made scenarios to run against (run them plus their edge variants — the v1.1 rules came from defects found in exactly these).
 
+**Red-Green routine (TDD — mandatory for every slice).** Never write production code before its test exists:
+1. **Red:** write the test first and run it — it must fail (won't compile or asserts wrong). If it passes on the first run, the test proves nothing; fix the test.
+2. **Green:** implement slowly, the smallest change that turns the test green. Re-run after each step.
+3. **Verify:** `./gradlew test` green, then `assembleDebug` + `lint` before closing the slice.
+
 ```bash
 ./gradlew test              # unit tests
 ./gradlew assembleDebug     # build
