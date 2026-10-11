@@ -2,6 +2,9 @@ package com.example.tracko.data.repository
 
 import com.example.tracko.data.local.dao.HabitLogDao
 import com.example.tracko.data.local.entities.HabitLogEntity
+import com.example.tracko.domain.LogIntent
+import com.example.tracko.domain.LoggingRules
+import com.example.tracko.domain.model.Habit
 import com.example.tracko.domain.model.LogEntry
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +27,20 @@ class HabitLogRepository(private val dao: HabitLogDao) {
     suspend fun logsInRange(from: LocalDate, to: LocalDate): List<LogEntry> =
         dao.logsInRange(from, to).map { it.toDomain() }
 
-    suspend fun upsert(entry: LogEntry) = dao.upsert(entry.toEntity())
+    /**
+     * The single user write path for check-ins (FR-5, FR-6, FR-31): validates
+     * through `LoggingRules` before writing (§4.13) — window, `createdOn`, and
+     * `BONUS`-vs-`DONE` correctness. System rows (`MISSED`, `FROZEN`,
+     * `NOT_ACTIVE`, `PAUSED`) are written by the `Finalizer` via
+     * `HabitRepository`, never here.
+     */
+    suspend fun upsert(entry: LogEntry, habit: Habit, today: LocalDate) {
+        val expected = LoggingRules().validate(habit, entry.date, LogIntent.forUserStatus(entry.status), today)
+        require(expected == entry.status) {
+            "Status $entry.status does not match logging rules (expected $expected, FR-31 §4.13)"
+        }
+        dao.upsert(entry.toEntity())
+    }
 
     private fun LogEntry.toEntity() = HabitLogEntity(
         id = id,

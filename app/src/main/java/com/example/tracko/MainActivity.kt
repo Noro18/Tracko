@@ -25,7 +25,9 @@ class MainActivity : ComponentActivity() {
      * Screens never call `getInstance` themselves.
      */
     private val database by lazy { TrackoDatabase.getInstance(this) }
-    private val habitRepository by lazy { HabitRepository(database.habitDao()) }
+    private val habitRepository by lazy {
+        HabitRepository(database.habitDao(), database.habitLogDao(), database.appStateDao())
+    }
     private val habitLogRepository by lazy { HabitLogRepository(database.habitLogDao()) }
     private val appStateRepository by lazy { AppStateRepository(database.appStateDao()) }
     override fun onCreate(savedInstanceState: Bundle?) {
