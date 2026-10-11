@@ -11,9 +11,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.tracko.data.local.TrackoDatabase
+import com.example.tracko.data.repository.AppStateRepository
+import com.example.tracko.data.repository.HabitLogRepository
+import com.example.tracko.data.repository.HabitRepository
 import com.example.tracko.ui.theme.TrackoTheme
 
 class MainActivity : ComponentActivity() {
+    /**
+     * Manual DI (architecture assumption 5): one DB singleton → three repos.
+     * Per-feature `XxxViewModelFactory(repo)` instances are built here in the
+     * `home` / `habit-edit` modules and passed to `viewModel(factory = ...)`.
+     * Screens never call `getInstance` themselves.
+     */
+    private val database by lazy { TrackoDatabase.getInstance(this) }
+    private val habitRepository by lazy { HabitRepository(database.habitDao()) }
+    private val habitLogRepository by lazy { HabitLogRepository(database.habitLogDao()) }
+    private val appStateRepository by lazy { AppStateRepository(database.appStateDao()) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
