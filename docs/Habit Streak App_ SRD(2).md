@@ -73,6 +73,7 @@ A mobile app that helps me build good habits and break bad ones by tracking stre
 ### 2.6 Screens and views
 
 - **FR-20:** Each habit has its **own streak calendar**: a month grid like GitHub's contribution graph, with completed days filled in.
+- **FR-20a:** Each habit card on Home shows a **compact heatmap** of recent weeks with the same day coloring as the detail calendar.
 - **FR-21:** Stats are kept simple: **current streak** and **longest streak** per habit.
 - **FR-21a:** Per-habit streaks stay strict. A habit's streak is never kept alive by activity in a different habit.
 - **FR-22:** Each habit shows its own **freezes available** on its calendar screen. There is no app-wide freeze counter.
