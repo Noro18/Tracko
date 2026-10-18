@@ -14,6 +14,7 @@ import com.example.tracko.domain.model.LogEntry
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -98,6 +99,14 @@ class HabitRepository(
         )
         validate(updated.toDomain())
         dao.update(updated)
+    }
+
+    /**
+     * Open-time finalization (§4.6, FR-19): judge every habit once, then the
+     * UI may read. Loop only — per-habit work stays in [finalizeHabit].
+     */
+    suspend fun finalizeAll(today: LocalDate) {
+        dao.observeHabits().first().forEach { finalizeHabit(it.toDomain(), today) }
     }
 
     /**
